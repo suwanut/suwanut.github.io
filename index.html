@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสลิปเงินเดือน - Thai Rung Group</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Sarabun -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            overflow-y: hidden; /* Hide main scrollbar for dashboard feel */
+        }
+        @media (max-width: 1024px) {
+            body {
+                overflow-y: auto; /* Allow scroll on mobile */
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col">
+    <div id="root" class="h-full flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        // --- Icons (Inline SVG) ---
+        const IconUser = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        );
+        const IconSearch = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        );
+        const IconCalendar = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        );
+        const IconFileText = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+        );
+        const IconExternalLink = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+        );
+        const IconChevronDown = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6"/></svg>
+        );
+        const IconCheck = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+        );
+        const IconAlertCircle = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+        );
+        const IconMaximize = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/></svg>
+        );
+
+        // --- Data ---
+        const EMPLOYEES_DATA = [
+            { "emp_id": "1449001", "first_name": "วุฒิชัย", "last_name": "เผอิญโชค", "nick_name": "โจ้", "position_name": "กรรมการผู้จัดการ" },
+            { "emp_id": "1239002", "first_name": "ประสงค์", "last_name": "ปิยะธนะศิริกุล", "nick_name": "อู๊ด", "position_name": "ที่ปรึกษา" },
+            { "emp_id": "1460020", "first_name": "พัฒนศรณ์", "last_name": "เผอิญโชค", "nick_name": "จ๊อบ ", "position_name": "ผู้ช่วยกรรมการผู้จัดการ" },
+            { "emp_id": "1249001", "first_name": "ณัฐกานต์", "last_name": "อินทะศร", "nick_name": "เล็ก", "position_name": "เลขานุการบริหาร" },
+            { "emp_id": "1266024", "first_name": "สราภรณ์", "last_name": "คุณวุฒิปกรณ์", "nick_name": "อาย", "position_name": "เลขานุการ" },
+            { "emp_id": "1466004", "first_name": "ขจรเดช", "last_name": "ช่วงชยพันธุ์", "nick_name": "โจ", "position_name": "พนักงานขับรถผู้บริหาร" },
+            { "emp_id": "1468003", "first_name": "กฤษฎา", "last_name": "ชูเลิศมงคล", "nick_name": "เผือก", "position_name": "ผู้จัดการฝ่ายพัฒนาอสังหาริมทรัพย์" },
+            { "emp_id": "1468001", "first_name": "สุวนัฐ", "last_name": "แตงทรัพย์", "nick_name": "หนึ่ง", "position_name": "เจ้าหน้าที่พัฒนาระบบ(อาวุโส)" },
+            { "emp_id": "1250002", "first_name": "กฤติกา", "last_name": "สุนทรส", "nick_name": "นุ่น", "position_name": "ผู้จัดการฝ่ายขายและการตลาด" },
+            { "emp_id": "1457006", "first_name": "ระเบียบ", "last_name": "สุวพรศิลป์", "nick_name": "โบว์", "position_name": "หัวหน้าแผนกการตลาดออนไลน์" },
+            { "emp_id": "1467018", "first_name": "ขวัญนภา", "last_name": "ปานประเสริฐ", "nick_name": "นาขวัญ", "position_name": "เจ้าหน้าที่ออนไลน์" },
+            { "emp_id": "1268007", "first_name": "ณัฐวดี", "last_name": "เอี่ยมเงิน", "nick_name": "บิว", "position_name": "เจ้าหน้าที่ขายและประสานงาน" },
+            { "emp_id": "1266027", "first_name": "เบญจวรรณ", "last_name": "อินทร์อำนวย", "nick_name": "มิ้น", "position_name": "หัวหน้าแผนกขายพื้นที่เช่า" },
+            { "emp_id": "1266006", "first_name": "ยงยุทธ", "last_name": "สิงห์นนท์", "nick_name": "ยุทธ", "position_name": "ประธานเจ้าหน้าที่ด้านปฏิบัติการ (COO)" },
+            { "emp_id": "1268006", "first_name": "ฐาปนา", "last_name": "สินธวาชีวะ", "nick_name": "เต้", "position_name": "หัวหน้าแผนกซ่อมบำรุง" },
+            { "emp_id": "1266026", "first_name": "จุฑากานต์", "last_name": "หวังอัครโรจน์", "nick_name": "หมวย", "position_name": "เจ้าหน้าที่ประชาสัมพันธ์และธุรการ" },
+            { "emp_id": "1267014", "first_name": "ณัฐชานทท์", "last_name": "ศรีรัตนเจริญชัย", "nick_name": "นุกเกอร์ ", "position_name": "เจ้าหน้าที่ประชาสัมพันธ์และธุรการ" },
+            { "emp_id": "1267008", "first_name": "วารฉัตร", "last_name": "เข็มเพชร", "nick_name": "จ๊ะจ๋า", "position_name": "เจ้าหน้าที่ขายพื้นที่เช่า" },
+            { "emp_id": "1267015", "first_name": "เมธาวี", "last_name": "ฤกษ์วิรี", "nick_name": "เบลเยี่ยม", "position_name": "เจ้าหน้าที่ธุรการศูนย์การค้า" },
+            { "emp_id": "1267009", "first_name": "วรทย์", "last_name": "น้อยแย้ม", "nick_name": "ต๊อบ", "position_name": "เจ้าหน้าที่ศูนย์การค้า" },
+            { "emp_id": "1267010", "first_name": "อัศวิน", "last_name": "แจ้งสงคราม", "nick_name": "หมู", "position_name": "เจ้าหน้าที่ศูนย์การค้า" },
+            { "emp_id": "1267029", "first_name": "เอกพันธ์", "last_name": "ทรัพย์ผุด", "nick_name": "เอก", "position_name": "เจ้าหน้าที่ศูนย์การค้า" },
+            { "emp_id": "1267011", "first_name": "นิภากาญจน์", "last_name": "แก่นจันทร์", "nick_name": "บีม", "position_name": "เจ้าหน้าที่ธุรการงานซ่อม" },
+            { "emp_id": "1267016", "first_name": "ธณรัช", "last_name": "วงศ์ปัทมทอง", "nick_name": "ต้อง", "position_name": "เจ้าหน้าที่บริการลูกค้า" },
+            { "emp_id": "1267027", "first_name": "มัสมล", "last_name": "บุษกรโอภาส", "nick_name": "มัส", "position_name": "เจ้าหน้าที่กราฟฟิก" },
+            { "emp_id": "1262019", "first_name": "ชัญญาติณห์", "last_name": "วงศ์ภานุวัฒน์", "nick_name": "ติณ", "position_name": "เจ้าหน้าที่บรรณารักษ์" },
+            { "emp_id": "1265013", "first_name": "กิตติมา", "last_name": "สุขวิพัฒน์", "nick_name": "มิลค์", "position_name": "เจ้าหน้าที่บริการลูกค้า" },
+            { "emp_id": "1267018", "first_name": "ธมล", "last_name": "อึ้งบุญภักดี", "nick_name": "ตั้ม", "position_name": "หัวหน้าแม่บ้าน" },
+            { "emp_id": "1443001", "first_name": "ประจักร์", "last_name": "สุวัตถี", "nick_name": "จัก", "position_name": "รองหัวหน้าแผนกซ่อมบำรุง" },
+            { "emp_id": "1259013", "first_name": "สิทธิชัย", "last_name": "สวัสดิ์วโรดม", "nick_name": "สิทธิ์", "position_name": "ช่างซ่อมบำรุง" },
+            { "emp_id": "1267030", "first_name": "นภัสสร", "last_name": "บุญสวน", "nick_name": "โจ้", "position_name": "เจ้าหน้าที่ประสานงานโครงการ" },
+            { "emp_id": "1266003", "first_name": "วีรวัตร", "last_name": "หารสกุล", "nick_name": "เฉิน", "position_name": "ช่างซ่อมบำรุง" },
+            { "emp_id": "1267002", "first_name": "พิมพาพร", "last_name": "โกศะฐา", "nick_name": "พร", "position_name": "แม่บ้าน" },
+            { "emp_id": "1268001", "first_name": "มารุต", "last_name": "ธรรมประพนธ์", "nick_name": "วัฒน์", "position_name": "ประธานเจ้าหน้าที่ด้านการเงิน (CFO)" },
+            { "emp_id": "1260029", "first_name": "นวพร", "last_name": "สิงห์ศรี", "nick_name": "หน่อย", "position_name": "ผู้จัดการส่วนการเงิน" },
+            { "emp_id": "1450001", "first_name": "ศิริรัตน์", "last_name": "ธัญญารัตน์สกุล", "nick_name": "เอ", "position_name": "หัวหน้าแผนกบัญชี" },
+            { "emp_id": "1464009", "first_name": "วสันต์", "last_name": "ผิวมะลิ", "nick_name": "เต๋อ", "position_name": "หัวหน้าแผนกบัญชี" },
+            { "emp_id": "1259008", "first_name": "จารุวรรณ", "last_name": "หลงชิน", "nick_name": "ยุ้ย", "position_name": "เจ้าหน้าที่บัญชี" },
+            { "emp_id": "1268002", "first_name": "รัตรชนี", "last_name": "ผิวเกลี้ยง", "nick_name": "รัตน์", "position_name": "เจ้าหน้าที่บัญชี" },
+            { "emp_id": "1465004", "first_name": "ชิชญ์ฌาน์", "last_name": "เจริญวัย", "nick_name": "แตงโม", "position_name": "เจ้าหน้าที่บัญชี" },
+            { "emp_id": "1266012", "first_name": "อริสา", "last_name": "ใจมา", "nick_name": "ริสา", "position_name": "เจ้าหน้าที่บัญชี" },
+            { "emp_id": "1455005", "first_name": "วราภรณ์", "last_name": "ชั่งใจ", "nick_name": "ก้อย", "position_name": "เจ้าหน้าที่บัญชี" },
+            { "emp_id": "1249002", "first_name": "เพ็ญพร", "last_name": "พรหมดวง", "nick_name": "บี", "position_name": "เจ้าหน้าที่จัดซื้อ" },
+            { "emp_id": "1268003", "first_name": "ชนัญชิดา", "last_name": "คำอุ่น", "nick_name": "สาลี่", "position_name": "เจ้าหน้าที่จัดซื้อ" },
+            { "emp_id": "1256017", "first_name": "กาณฑ์", "last_name": "เกิดแก่น", "nick_name": "ต้อง", "position_name": "รองผู้อำนวยการฝ่ายพัฒนาโครงการ" },
+            { "emp_id": "1261027", "first_name": "วรากรณ์", "last_name": "สุดเพียร", "nick_name": "ปุ๋ย", "position_name": "หัวหน้าแผนกพัฒนาโครงการ" },
+            { "emp_id": "1265015", "first_name": "จินดานุช", "last_name": "ผลบุญ", "nick_name": "แคท", "position_name": "นิติกร" },
+            { "emp_id": "1254001", "first_name": "กมลทิพย์", "last_name": "เกิดปัญญา", "nick_name": "ทิพย์", "position_name": "หัวหน้าแผนกบุคคลและธุรการ" },
+            { "emp_id": "1260025", "first_name": "ชัญญภัทร", "last_name": "นาคพิทักษ์", "nick_name": "เนส", "position_name": "เจ้าหน้าที่ทรัพยากรบุคคลและธุรการ" },
+            { "emp_id": "1265008", "first_name": "จุฑารุต", "last_name": "พุมาเกรียว", "nick_name": "กิ๊ก", "position_name": "เจ้าหน้าที่ธุรการบุคคล" },
+            { "emp_id": "1257038", "first_name": "นที", "last_name": "ป้องเศร้า", "nick_name": "กบ", "position_name": "พนักงานขับรถ" },
+            { "emp_id": "1453002", "first_name": "เกศรา", "last_name": "เทพศร", "nick_name": "เกศ", "position_name": "หัวหน้าแผนกทรัพย์สิน" },
+            { "emp_id": "1462029", "first_name": "พรนิภา", "last_name": "อ้นทอง", "nick_name": "เมย์", "position_name": "เจ้าหน้าที่บริหารทรัพย์สิน" },
+            { "emp_id": "1468004", "first_name": "พชร", "last_name": "ขำดี", "nick_name": "กิ๊ฟ", "position_name": "เจ้าหน้าที่บริหารทรัพย์สิน" },
+            { "emp_id": "1458012", "first_name": "นภัสวรรณ", "last_name": "แสงเพชร", "nick_name": "ตาล", "position_name": "ผู้ช่วยผู้จัดการส่วนการเงิน" },
+            { "emp_id": "1466008", "first_name": "ทศภณ", "last_name": "เขียวแก้ว", "nick_name": "โบ้", "position_name": "นักวิเคราะห์การลงทุน" },
+            { "emp_id": "1467005", "first_name": "อัตตา", "last_name": "เภาพโสภา", "nick_name": "อั๊ต", "position_name": "นักวิเคราะห์การลงทุน" },
+            { "emp_id": "1466012", "first_name": "จิราพร", "last_name": "สากระจาย", "nick_name": "ผึ้ง", "position_name": "เจ้าหน้าที่บัญชี" },
+            { "emp_id": "1468005", "first_name": "ปวร", "last_name": "จารุจารีต", "nick_name": "ปอ", "position_name": "ผู้อำนวยการสายงานบริหาร" },
+            { "emp_id": "1465007", "first_name": "ชินทัพพ์", "last_name": "ชุ่มชื่น", "nick_name": "ตั้ม", "position_name": "ผู้จัดการฝ่ายบริหารอาคารและทรัพย์สิน" },
+            { "emp_id": "1467014", "first_name": "ลลิตรวี", "last_name": "รวีวงศ์มาศ", "nick_name": "ปุ้ย", "position_name": "เจ้าหน้าที่ขายและบริการลูกค้า" },
+            { "emp_id": "1467017", "first_name": "รุ่งทิวา", "last_name": "ธรรมชอบ", "nick_name": "ออมสิน", "position_name": "เจ้าหน้าที่ธุรการอาคาร" },
+            { "emp_id": "1460003", "first_name": "ธนพล", "last_name": "เปนะนาม", "nick_name": "บอล", "position_name": "รองหัวหน้าแผนกซ่อมบำรุง" },
+            { "emp_id": "1462007", "first_name": "คมศักดิ์", "last_name": "ด้วงตุ่น", "nick_name": "เชน", "position_name": "ช่างซ่อมบำรุง" },
+            { "emp_id": "1462010", "first_name": "อรวรรณ", "last_name": "ปิ่นจันทร์", "nick_name": "เตย", "position_name": "เจ้าหน้าที่บัญชี" },
+            { "emp_id": "1462013", "first_name": "ธนาศักดิ์", "last_name": "แจ่มวัน", "nick_name": "เอฟ", "position_name": "ช่างซ่อมบำรุง" },
+            { "emp_id": "1468006", "first_name": "นัฐพล", "last_name": "วรสุข", "nick_name": "อิคคิว", "position_name": "ผู้ช่วยผู้จัดการฝ่ายบริการลูกค้า" },
+            { "emp_id": "1459001", "first_name": "วิจิตรา", "last_name": "สุตะนา", "nick_name": "ตาล", "position_name": "แม่บ้าน" },
+            { "emp_id": "1468002", "first_name": "ธนาธิป", "last_name": "ผิวเกลี้ยง", "nick_name": "อาร์ท", "position_name": "เจ้าหน้าที่ประสานงานขาย" },
+            { "emp_id": "1461001", "first_name": "ธนา", "last_name": "ลี้ตระกูลศิลป", "nick_name": "อู๋", "position_name": "ผู้จัดการฝ่ายขาย" },
+            { "emp_id": "1465005", "first_name": "ณัฐพล", "last_name": "ตันสุริยวงศ์", "nick_name": "ไนซ์", "position_name": "ที่ปรึกษาอสังหาริมทรัพย์" },
+            { "emp_id": "1466011", "first_name": "อัษฎาวุธ", "last_name": "วิเศษศิริกุล", "nick_name": "ดุ่ย", "position_name": "ที่ปรึกษาอสังหาริมทรัพย์" },
+            { "emp_id": "1467012", "first_name": "ชินโชติ", "last_name": "เรือนใหม่", "nick_name": "ชิน", "position_name": "ผู้จัดการฝ่ายขาย(อาวุโส)" },
+            { "emp_id": "1467019", "first_name": "วิรัตน์", "last_name": "ตาสามดี", "nick_name": "บอน", "position_name": "ที่ปรึกษาอสังหาริมทรัพย์" },
+            { "emp_id": "1455004", "first_name": "จริยวรรณ", "last_name": "คำกลิ่น", "nick_name": "เอ", "position_name": "เจ้าหน้าที่ประสานงานส่วนกลาง(อาวุโส)" },
+            { "emp_id": "1268024", "first_name": "มธุรส", "last_name": "ขยัน", "nick_name": "เจน", "position_name": "เจ้าหน้าที่ประสานงานขาย" },
+            { "emp_id": "1468012", "first_name": "เกศศิรินทร์", "last_name": "ปานโต", "nick_name": "ดา", "position_name": "ผู้จัดการฝ่ายขาย(อาวุโส)" },
+            { "emp_id": "1468015", "first_name": "สุรศักดิ์", "last_name": "จันทรดี", "nick_name": "เควิน", "position_name": "เจ้าหน้าที่ขายและบริการลูกค้า" },
+            { "emp_id": "1468017", "first_name": "ภูษณิศา", "last_name": "วิชิตระกูล", "nick_name": "ส้ม", "position_name": "เจ้าหน้าที่บริการลูกค้า" },
+            { "emp_id": "1468018", "first_name": "ศุภวิชญ์", "last_name": "ตุ่ยสติ", "nick_name": "ดิ๊บ", "position_name": "เจ้าหน้าที่พัฒนาระบบ" },
+            { "emp_id": "STP_BOT", "first_name": "STP", "last_name": "BOT", "nick_name": "NO REPLY", "position_name": "เจ้าหน้าที่พัฒนาระบบ(อาวุโส)" },
+            { "emp_id": "0160001", "first_name": "นพรัตน์", "last_name": "บุญจริง", "nick_name": "หน่อย", "position_name": "ประธานเจ้าหน้าที่ด้านสนับสนุนองค์กร (CCO)" },
+            { "emp_id": "1268034", "first_name": "ธนาธิป", "last_name": "ผิวเกลี้ยง", "nick_name": "อาร์ท", "position_name": "เจ้าหน้าที่ประสานงานขาย" },
+            { "emp_id": "1468019", "first_name": "ธิญาดา", "last_name": "สุขเกษม", "nick_name": "ฟาง", "position_name": "เจ้าหน้าที่ขายและบริการลูกค้า" }
+        ];
+
+        // --- Components ---
+
+        const EmployeeCombobox = ({ employees, selectedEmployee, onSelect }) => {
+            const [query, setQuery] = useState('');
+            const [isOpen, setIsOpen] = useState(false);
+            const containerRef = useRef(null);
+
+            // Filter employees
+            const filteredEmployees = useMemo(() => {
+                return employees.filter((person) => {
+                    const searchTerm = query.toLowerCase();
+                    return (
+                        person.first_name.toLowerCase().includes(searchTerm) ||
+                        person.last_name.toLowerCase().includes(searchTerm) ||
+                        person.emp_id.toLowerCase().includes(searchTerm) ||
+                        person.nick_name.toLowerCase().includes(searchTerm)
+                    );
+                });
+            }, [query, employees]);
+
+            const handleSelect = (person) => {
+                onSelect(person);
+                setQuery('');
+                setIsOpen(false);
+            };
+
+            // Click outside handler
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (containerRef.current && !containerRef.current.contains(event.target)) {
+                        setIsOpen(false);
+                    }
+                };
+                document.addEventListener("mousedown", handleClickOutside);
+                return () => document.removeEventListener("mousedown", handleClickOutside);
+            }, []);
+
+            return (
+                <div className="relative" ref={containerRef}>
+                    <div 
+                        className="w-full relative cursor-pointer"
+                        onClick={() => setIsOpen(!isOpen)}
+                    >
+                        <div className={`w-full p-2.5 pl-9 border rounded-lg bg-white shadow-sm flex items-center justify-between transition-all duration-200 text-sm ${isOpen ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-slate-200 hover:border-indigo-300'}`}>
+                            <div className="flex items-center overflow-hidden w-full">
+                                <IconUser className="w-4 h-4 text-indigo-500 absolute left-3" />
+                                <span className={`ml-1 truncate ${selectedEmployee ? 'text-slate-800 font-medium' : 'text-slate-400'}`}>
+                                    {selectedEmployee 
+                                        ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}`
+                                        : "ค้นหาชื่อ/รหัส..."}
+                                </span>
+                            </div>
+                            <IconChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                    </div>
+
+                    {isOpen && (
+                        <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-lg shadow-xl max-h-80 overflow-hidden flex flex-col">
+                            <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
+                                <div className="relative">
+                                    <IconSearch className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                                    <input
+                                        type="text"
+                                        className="w-full p-2 pl-9 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                        placeholder="พิมพ์ชื่อ หรือรหัส..."
+                                        value={query}
+                                        onChange={(e) => setQuery(e.target.value)}
+                                        autoFocus
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="overflow-y-auto max-h-60">
+                                {filteredEmployees.length === 0 ? (
+                                    <div className="p-4 text-center text-slate-500 text-sm">ไม่พบรายชื่อพนักงาน</div>
+                                ) : (
+                                    filteredEmployees.map((person) => (
+                                        <div
+                                            key={person.emp_id}
+                                            className={`p-3 cursor-pointer hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-0 flex justify-between items-center ${selectedEmployee?.emp_id === person.emp_id ? 'bg-indigo-50' : ''}`}
+                                            onClick={() => handleSelect(person)}
+                                        >
+                                            <div>
+                                                <div className="font-medium text-slate-800 text-sm">
+                                                    {person.first_name} {person.last_name}
+                                                </div>
+                                                <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                                                    <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">{person.emp_id}</span>
+                                                    <span>{person.nick_name}</span>
+                                                </div>
+                                            </div>
+                                            {selectedEmployee?.emp_id === person.emp_id && (
+                                                <IconCheck className="w-4 h-4 text-indigo-600" />
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [selectedEmployee, setSelectedEmployee] = useState(null);
+            const [paidDate, setPaidDate] = useState('2025-12-30');
+            const [generatedUrl, setGeneratedUrl] = useState('');
+            const [iframeKey, setIframeKey] = useState(0);
+
+            const handleGenerate = () => {
+                if (selectedEmployee && paidDate) {
+                    const url = `https://app.thairunggroup.co.th/myachieved/ReportLandScapeA5?EmployeeCode=${selectedEmployee.emp_id}&PaidDate=${paidDate}&ReportCode=Slip`;
+                    setGeneratedUrl(url);
+                    setIframeKey(prev => prev + 1);
+                }
+            };
+
+            const handleClear = () => {
+                setGeneratedUrl('');
+                setSelectedEmployee(null);
+            };
+
+            return (
+                <div className="flex flex-col h-screen overflow-hidden bg-slate-50 font-sans">
+                    {/* Header */}
+                    <div className="bg-white border-b border-slate-200 flex-none z-30 shadow-sm">
+                        <div className="w-full px-6 py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-indigo-600 p-1.5 rounded-lg shadow-lg shadow-indigo-200">
+                                    <IconFileText className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold text-slate-800">
+                                        ระบบสลิปเงินเดือน
+                                    </h1>
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Thai Rung Group Portal</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-hidden p-4">
+                        <div className="w-full max-w-[98%] mx-auto h-full grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        
+                            {/* Controls Section (Side Bar) */}
+                            <div className="lg:col-span-3 h-full flex flex-col">
+                                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-5 flex-1 overflow-y-auto">
+                                    <h2 className="text-base font-semibold text-slate-800 border-b border-slate-100 pb-2 mb-2 flex items-center gap-2">
+                                        <IconUser className="w-4 h-4 text-indigo-500" />
+                                        ข้อมูลพนักงาน
+                                    </h2>
+
+                                    {/* Employee Selector */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                            ค้นหา
+                                        </label>
+                                        <EmployeeCombobox 
+                                            employees={EMPLOYEES_DATA} 
+                                            selectedEmployee={selectedEmployee} 
+                                            onSelect={setSelectedEmployee} 
+                                        />
+                                        
+                                        {/* Employee Details Card */}
+                                        {selectedEmployee && (
+                                            <div className="mt-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100 text-sm">
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between items-center border-b border-indigo-100 pb-2">
+                                                        <span className="text-indigo-600 font-bold text-lg">{selectedEmployee.nick_name}</span>
+                                                        <span className="bg-white px-2 py-0.5 rounded text-xs text-slate-500 border border-slate-100 font-mono">{selectedEmployee.emp_id}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xs text-slate-500 block">ชื่อ-นามสกุล</span>
+                                                        <span className="font-medium text-slate-800">{selectedEmployee.first_name} {selectedEmployee.last_name}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xs text-slate-500 block">ตำแหน่ง</span>
+                                                        <span className="font-medium text-indigo-900 leading-tight block">{selectedEmployee.position_name}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Date Selector */}
+                                    <div className="space-y-1.5 pt-2">
+                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                                            งวดวันที่จ่าย
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="date"
+                                                value={paidDate}
+                                                onChange={(e) => setPaidDate(e.target.value)}
+                                                className="w-full p-2.5 pl-9 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-700 text-sm font-medium"
+                                            />
+                                            <IconCalendar className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="pt-4 flex flex-col gap-2 mt-auto">
+                                        <button
+                                            onClick={handleGenerate}
+                                            disabled={!selectedEmployee || !paidDate}
+                                            className={`w-full py-3 px-4 rounded-lg font-bold shadow-sm flex items-center justify-center gap-2 transition-all transform active:scale-95
+                                                ${!selectedEmployee || !paidDate 
+                                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200' 
+                                                : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-200'}`}
+                                        >
+                                            <IconFileText className="w-5 h-5" />
+                                            แสดงสลิปเงินเดือน
+                                        </button>
+                                        {generatedUrl && (
+                                            <button
+                                                onClick={handleClear}
+                                                className="w-full py-2 px-4 rounded-lg font-medium text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-700 transition-colors text-sm"
+                                            >
+                                                ล้างข้อมูล
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Display Section (PDF Viewer) */}
+                            <div className="lg:col-span-9 h-full flex flex-col">
+                                <div className="bg-white rounded-xl shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden relative">
+                                    <div className="border-b border-slate-100 p-3 bg-slate-50 flex items-center justify-between flex-none h-12">
+                                        <h3 className="font-semibold text-slate-700 flex items-center gap-2 text-sm">
+                                            <IconFileText className="w-4 h-4 text-slate-400" />
+                                            ตัวอย่างเอกสาร (Preview)
+                                        </h3>
+                                        {generatedUrl && (
+                                            <a 
+                                                href={generatedUrl} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1 hover:bg-indigo-50 px-3 py-1 rounded-md transition-colors"
+                                            >
+                                                <IconMaximize className="w-4 h-4" />
+                                                เปิดเต็มจอ
+                                            </a>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="flex-1 bg-slate-200 relative w-full h-full">
+                                        {generatedUrl ? (
+                                            <iframe
+                                                key={iframeKey}
+                                                src={generatedUrl}
+                                                title="Salary Slip"
+                                                className="w-full h-full border-0 absolute inset-0"
+                                                onError={() => alert("ไม่สามารถโหลดแสดงผลได้ กรุณากดเปิดในหน้าต่างใหม่")}
+                                            />
+                                        ) : (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 backdrop-blur-sm">
+                                                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-slate-100">
+                                                    <IconFileText className="w-10 h-10 text-slate-300" />
+                                                </div>
+                                                <p className="text-xl font-medium text-slate-600">พร้อมแสดงผล</p>
+                                                <p className="text-sm mt-2 text-slate-400">กรุณาเลือกพนักงานและวันที่จากเมนูด้านซ้าย</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
