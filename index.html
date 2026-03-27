@@ -5,7 +5,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex, nofollow">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบแสดงผลเอกสารพนักงาน</title>
     
     <!-- React & ReactDOM -->
@@ -22,24 +22,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body {
+        body, html {
+            margin: 0;
+            padding: 0;
             font-family: 'Sarabun', sans-serif;
-            overflow-y: hidden;
-        }
-        @media (max-width: 1024px) {
-            body {
-                overflow-y: auto;
-            }
+            background-color: #f8fafc; /* slate-50 */
+            overflow: hidden; /* ป้องกันการเลื่อนหน้าเว็บหลัก ปล่อยให้ div ข้างในเลื่อนแทน */
         }
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-800">
+<body class="text-slate-800">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -53,34 +51,17 @@
             
             // รายการวันหยุดที่ตรงกับวันที่เดิมทุกปี (เดือน-วัน)
             const fixedDates = [
-                '01-01', // วันขึ้นปีใหม่
-                '04-06', // วันจักรี
-                '04-13', // วันสงกรานต์
-                '04-14', // วันสงกรานต์
-                '04-15', // วันสงกรานต์
-                '05-01', // วันแรงงานแห่งชาติ
-                '05-04', // วันฉัตรมงคล
-                '06-03', // วันเฉลิมพระชนมพรรษา สมเด็จพระราชินี
-                '07-28', // วันเฉลิมพระชนมพรรษา ร.10
-                '08-12', // วันแม่แห่งชาติ
-                '10-13', // วันนวมินทรมหาราช (วันคล้ายวันสวรรคต ร.9)
-                '10-23', // วันปิยมหาราช
-                '12-05', // วันพ่อแห่งชาติ
-                '12-10', // วันรัฐธรรมนูญ
-                '12-31'  // วันสิ้นปี
+                '01-01', '04-06', '04-13', '04-14', '04-15', 
+                '05-01', '05-04', '06-03', '07-28', '08-12', 
+                '10-13', '10-23', '12-05', '12-10', '12-31'
             ];
 
             for (let year = startYear; year <= endYear; year++) {
-                fixedDates.forEach(date => {
-                    holidays.push(`${year}-${date}`);
-                });
+                fixedDates.forEach(date => holidays.push(`${year}-${date}`));
             }
-
-            // เรียงลำดับวันที่จากอดีตไปอนาคต
             return holidays.sort();
         }
 
-        // เรียกใช้ฟังก์ชัน: 3 ปีย้อนหลัง (2023) + ปัจจุบัน (2026) + 10 ปีข้างหน้า (2036)
         const TH_HOLIDAYS_BASE = generateThaiFixedHolidays(2023, 2036);
 
         // 1.1 ข้อมูลพนักงานเริ่มต้น (ตามโครงสร้าง JSON ใหม่)
@@ -115,9 +96,7 @@
                 let isWeekend = (dayOfWeek === 0 || dayOfWeek === 6); 
                 let isHoliday = TH_HOLIDAYS_BASE.includes(dateString);
 
-                if (!isWeekend && !isHoliday) {
-                    return dateString;
-                }
+                if (!isWeekend && !isHoliday) return dateString;
                 
                 d.setDate(d.getDate() - 1);
             }
@@ -125,60 +104,40 @@
 
         // Icon Components
         const IconFileText = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
         );
         const IconSearch = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         );
         const IconHistory = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
         );
         const IconExternalLink = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        );
+        // ไอคอนลูกศรย้อนกลับสำหรับมือถือ
+        const IconArrowLeft = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         );
 
         const App = () => {
             const [employees, setEmployees] = useState(DEFAULT_EMPLOYEES);
             const [selectedEmployee, setSelectedEmployee] = useState(null);
             const [isLoading, setIsLoading] = useState(true);
-            
-            // Search Query State
             const [searchQuery, setSearchQuery] = useState("");
             
-            // Recent Viewed State (ดึงจาก LocalStorage ตอนเริ่มต้น)
             const [recentViewed, setRecentViewed] = useState(() => {
                 try {
                     const saved = localStorage.getItem('recentEmployees_v1');
                     return saved ? JSON.parse(saved) : [];
-                } catch (e) {
-                    return [];
-                }
+                } catch (e) { return []; }
             });
             
-            // Date Selection State
             const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
             const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
             const [calculatedDate, setCalculatedDate] = useState("");
-
             const [errorMsg, setErrorMsg] = useState("");
 
-            // โหลดข้อมูลอัตโนมัติ (สำหรับรันผ่าน Server)
             useEffect(() => {
                 setIsLoading(true);
                 fetch('./data.json')
@@ -187,74 +146,41 @@
                         return res.json();
                     })
                     .then(data => {
-                        // รองรับรูปแบบ JSON ที่มี Items หรือเป็น Array โดยตรง
-                        if (data && data.Items && Array.isArray(data.Items)) {
-                            setEmployees(data.Items);
-                        } else if (Array.isArray(data)) {
-                            setEmployees(data);
-                        }
+                        if (data && data.Items && Array.isArray(data.Items)) setEmployees(data.Items);
+                        else if (Array.isArray(data)) setEmployees(data);
                         setErrorMsg("");
                     })
                     .catch(err => {
-                        console.log("ใช้งานโหมดออฟไลน์ ใช้ข้อมูลตั้งต้นแทน:", err);
-                        setErrorMsg("ไม่สามารถโหลดข้อมูลจาก Server ได้ หรือไฟล์ data.json ไม่มีอยู่จริง");
+                        console.log("ใช้งานโหมดออฟไลน์:", err);
+                        setErrorMsg("ไม่พบไฟล์ data.json บน Server");
                     })
-                    .finally(() => {
-                        setIsLoading(false);
-                    });
+                    .finally(() => setIsLoading(false));
             }, []);
 
-            // อัปเดตวันที่เมื่อเลือกเดือน/ปีเปลี่ยน (แต่ผู้ใช้แก้จากปฏิทินเองได้)
             useEffect(() => {
-                const resultDate = getLastWorkingDay(selectedYear, selectedMonth);
-                setCalculatedDate(resultDate);
+                setCalculatedDate(getLastWorkingDay(selectedYear, selectedMonth));
             }, [selectedMonth, selectedYear]);
 
-            // ฟังก์ชันสำหรับเลือกพนักงานและบันทึกลงประวัติ
             const handleSelectEmployee = (emp) => {
                 setSelectedEmployee(emp);
-                
-                // อัปเดตรายการดูล่าสุด
                 setRecentViewed(prev => {
-                    // เอาคนเดิมที่อาจจะซ้ำออกก่อน
                     const filtered = prev.filter(p => p.Code !== emp.Code);
-                    // เอาคนใหม่ใส่ไว้หน้าสุด และเก็บแค่ 10 คนล่าสุด
                     const updated = [emp, ...filtered].slice(0, 10);
-                    // บันทึกลง LocalStorage
                     localStorage.setItem('recentEmployees_v1', JSON.stringify(updated));
                     return updated;
                 });
             };
 
-            // ระบบกรองการค้นหาพนักงาน
             const filteredEmployees = useMemo(() => {
-                // *** เพิ่มประสิทธิภาพ: ถ้าไม่ได้พิมพ์ค้นหา จะไม่เรนเดอร์ข้อมูลทั้งหมดให้ช้า ***
                 if (!searchQuery.trim()) return []; 
-                
                 const q = searchQuery.toLowerCase().trim();
                 return employees.filter(emp => {
-                    // รวมข้อมูลที่ต้องการค้นหาทั้งหมดไว้ใน String เดียวเพื่อเช็คง่ายๆ
-                    const searchString = `
-                        ${emp.Code || ""} 
-                        ${emp.FullName || ""} 
-                        ${emp.FirstNameTh || ""} 
-                        ${emp.LastNameTh || ""} 
-                        ${emp.FirstNameEn || ""} 
-                        ${emp.LastNameEn || ""} 
-                        ${emp.NickName || ""} 
-                        ${emp.PositionName || ""} 
-                        ${emp.DepartmentName || ""} 
-                        ${emp.CompanyCode || ""}
-                    `.toLowerCase();
-                    
+                    const searchString = `${emp.Code||""} ${emp.FullName||""} ${emp.FirstNameTh||""} ${emp.LastNameTh||""} ${emp.FirstNameEn||""} ${emp.LastNameEn||""} ${emp.NickName||""} ${emp.PositionName||""} ${emp.DepartmentName||""} ${emp.CompanyCode||""}`.toLowerCase();
                     return searchString.includes(q);
                 });
             }, [employees, searchQuery]);
 
-            // จำกัดจำนวนที่แสดงผลเพื่อป้องกันเว็บกระตุก (แสดง 100 รายการแรก)
-            const displayEmployees = useMemo(() => {
-                return filteredEmployees.slice(0, 100);
-            }, [filteredEmployees]);
+            const displayEmployees = useMemo(() => filteredEmployees.slice(0, 100), [filteredEmployees]);
 
             const documentUrl = useMemo(() => {
                 if (!selectedEmployee || !calculatedDate) return null;
@@ -262,32 +188,33 @@
             }, [selectedEmployee, calculatedDate]);
 
             return (
-                <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
+                // ใช้ h-[100dvh] เพื่อแก้ปัญหาจอมือถือ (dynamic viewport height)
+                <div className="h-[100dvh] flex flex-col lg:flex-row overflow-hidden bg-slate-100">
                     
-                    {/* Sidebar Left */}
-                    <div className="w-full lg:w-80 bg-white border-r border-slate-200 flex flex-col h-full shadow-sm z-10">
-                        <div className="p-5 border-b border-slate-100 bg-slate-50/50">
-                            <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                <IconFileText className="w-6 h-6 text-blue-600" />
+                    {/* ---------------- Sidebar Left (List) ---------------- */}
+                    {/* บนมือถือ: ถ้าเลือกพนักงานแล้ว ให้ซ่อน (hidden) ถ้ายังไม่เลือกให้แสดง (flex) / บน PC แสดงเสมอ (lg:flex) */}
+                    <div className={`w-full lg:w-80 bg-white border-r border-slate-200 flex-col h-full shadow-sm z-10 ${selectedEmployee ? 'hidden lg:flex' : 'flex'}`}>
+                        
+                        <div className="p-4 lg:p-5 border-b border-slate-100 bg-slate-50/50 shrink-0">
+                            <h1 className="text-lg lg:text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <IconFileText className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
                                 ระบบเอกสารเงินเดือน
                             </h1>
                         </div>
 
-                        <div className="p-5 flex-1 overflow-y-auto">
-                            
-                            {/* แสดงแจ้งเตือนกรณีดึงไฟล์ Error */}
+                        <div className="p-4 lg:p-5 flex-1 overflow-y-auto flex flex-col">
                             {errorMsg && (
-                                <div className="mb-6 bg-red-50 text-red-600 p-3 rounded-md border border-red-200 text-sm">
+                                <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-md border border-red-200 text-sm shrink-0">
                                     {errorMsg} <br/><span className="text-xs text-red-500">กำลังใช้ข้อมูลทดสอบแทน</span>
                                 </div>
                             )}
 
-                            {/* ส่วนเลือกเดือน/ปี และ ปฏิทิน */}
-                            <div className="mb-6 space-y-3">
+                            {/* งวดบัญชี */}
+                            <div className="mb-5 space-y-2 shrink-0">
                                 <label className="block text-sm font-semibold text-slate-700">งวดบัญชี และวันที่ออกเอกสาร</label>
                                 <div className="flex gap-2">
                                     <select 
-                                        className="w-2/3 border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                        className="w-2/3 border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                                     >
@@ -297,15 +224,13 @@
                                     </select>
                                     <input 
                                         type="number" 
-                                        className="w-1/3 border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                        className="w-1/3 border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                                         value={selectedYear}
                                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                                     />
                                 </div>
-                                
-                                {/* กล่องเลือกวันที่จากปฏิทิน */}
-                                <div className="bg-blue-50 text-blue-800 text-sm p-3 rounded-md border border-blue-100 flex flex-col mt-2">
-                                    <span className="text-xs text-blue-600 mb-1">วันที่ออกเอกสาร (ปรับเปลี่ยนได้):</span>
+                                <div className="bg-blue-50/80 text-blue-800 text-sm p-2.5 rounded-md border border-blue-100 flex flex-col mt-2">
+                                    <span className="text-[11px] text-blue-600 mb-1">วันที่ออกเอกสาร (ปรับเปลี่ยนได้):</span>
                                     <input 
                                         type="date"
                                         className="w-full border border-blue-200 rounded p-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 font-mono text-slate-700 bg-white cursor-pointer"
@@ -315,26 +240,25 @@
                                 </div>
                             </div>
 
-                            <hr className="my-6 border-slate-200" />
+                            <hr className="my-4 border-slate-200 shrink-0" />
 
-                            {/* รายชื่อพนักงาน และ ค้นหา */}
+                            {/* ค้นหา */}
                             <div className="flex flex-col flex-1 min-h-0">
-                                <label className="block text-sm font-semibold text-slate-700 mb-3 flex justify-between items-center shrink-0">
+                                <label className="block text-sm font-semibold text-slate-700 mb-2 flex justify-between items-center shrink-0">
                                     ค้นหาพนักงาน
-                                    <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-xs font-mono">
+                                    <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-mono">
                                         Total: {isLoading ? '...' : employees.length}
                                     </span>
                                 </label>
 
-                                {/* ช่องค้นหา */}
-                                <div className="relative mb-4 shrink-0">
+                                <div className="relative mb-3 shrink-0">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <IconSearch className="w-4 h-4 text-slate-400" />
                                     </div>
                                     <input 
                                         type="text" 
-                                        className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 outline-none transition-shadow disabled:bg-slate-50 disabled:text-slate-400" 
-                                        placeholder="พิมพ์ รหัส, ชื่อ, ตำแหน่ง, ฝ่าย..." 
+                                        className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 outline-none transition-shadow disabled:bg-slate-50 disabled:text-slate-400 shadow-sm" 
+                                        placeholder="รหัส, ชื่อ, ตำแหน่ง..." 
                                         value={searchQuery}
                                         onChange={e => setSearchQuery(e.target.value)}
                                         disabled={isLoading}
@@ -349,25 +273,19 @@
                                     )}
                                 </div>
                                 
-                                <div className="flex-1 overflow-y-auto pr-1">
+                                <div className="flex-1 overflow-y-auto pr-1 pb-4">
                                     {isLoading ? (
                                         <div className="text-center py-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg">
                                             <svg className="animate-spin h-6 w-6 text-blue-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
-                                            <p className="text-sm">กำลังโหลดข้อมูลพนักงาน...</p>
-                                        </div>
-                                    ) : employees.length === 0 ? (
-                                        <div className="text-center py-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg">
-                                            <p className="text-sm">ไม่พบข้อมูลพนักงาน<br/>กรุณาตรวจสอบไฟล์ data.json</p>
+                                            <p className="text-sm">กำลังโหลดข้อมูล...</p>
                                         </div>
                                     ) : !searchQuery.trim() ? (
-                                        /* แสดงประวัติดูล่าสุดเมื่อยังไม่ได้ค้นหา */
                                         <div>
-                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
-                                                <IconHistory className="w-3.5 h-3.5" />
-                                                ดูล่าสุด (Recent)
+                                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                                                <IconHistory className="w-3.5 h-3.5" /> ดูล่าสุด
                                             </div>
                                             {recentViewed.length === 0 ? (
                                                 <div className="text-center py-6 text-slate-400 rounded-lg bg-slate-50 border border-slate-100 text-sm">
@@ -379,31 +297,29 @@
                                                         <button
                                                             key={`recent-${emp.Code}`}
                                                             onClick={() => handleSelectEmployee(emp)}
-                                                            className={`w-full text-left px-4 py-3 rounded-lg border transition-all duration-200 ${
+                                                            className={`w-full text-left px-3 py-2.5 lg:px-4 lg:py-3 rounded-lg border transition-all duration-200 ${
                                                                 selectedEmployee?.Code === emp.Code 
                                                                 ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
-                                                                : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white'
+                                                                : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white shadow-sm'
                                                             }`}
                                                         >
-                                                            <div className="flex justify-between items-start mb-1">
-                                                                <span className="font-medium text-slate-800">{emp.FullName || 'ไม่ระบุชื่อ'}</span>
+                                                            <div className="flex justify-between items-start mb-0.5">
+                                                                <span className="font-medium text-slate-800 text-sm lg:text-base">{emp.FullName || 'ไม่ระบุชื่อ'}</span>
                                                                 <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{emp.Code}</span>
                                                             </div>
-                                                            <div className="text-xs text-slate-500">{emp.PositionName || 'ไม่ระบุตำแหน่ง'}</div>
+                                                            <div className="text-xs text-slate-500 line-clamp-1">{emp.PositionName || 'ไม่ระบุตำแหน่ง'}</div>
                                                         </button>
                                                     ))}
                                                 </div>
                                             )}
                                         </div>
                                     ) : displayEmployees.length === 0 ? (
-                                        /* เมื่อค้นหาแล้วไม่เจอ */
                                         <div className="text-center py-6 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50">
                                             <p className="text-sm">ไม่พบพนักงานที่ค้นหา</p>
                                         </div>
                                     ) : (
-                                        /* แสดงผลลัพธ์การค้นหา */
                                         <div>
-                                            <div className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                                            <div className="text-[11px] font-semibold text-slate-500 mb-2 uppercase tracking-wider">
                                                 ผลการค้นหา ({filteredEmployees.length})
                                             </div>
                                             <div className="space-y-2">
@@ -411,25 +327,19 @@
                                                     <button
                                                         key={emp.Code}
                                                         onClick={() => handleSelectEmployee(emp)}
-                                                        className={`w-full text-left px-4 py-3 rounded-lg border transition-all duration-200 ${
+                                                        className={`w-full text-left px-3 py-2.5 lg:px-4 lg:py-3 rounded-lg border transition-all duration-200 ${
                                                             selectedEmployee?.Code === emp.Code 
                                                             ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
-                                                            : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white'
+                                                            : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white shadow-sm'
                                                         }`}
                                                     >
-                                                        <div className="flex justify-between items-start mb-1">
-                                                            <span className="font-medium text-slate-800">{emp.FullName || 'ไม่ระบุชื่อ'}</span>
+                                                        <div className="flex justify-between items-start mb-0.5">
+                                                            <span className="font-medium text-slate-800 text-sm lg:text-base">{emp.FullName || 'ไม่ระบุชื่อ'}</span>
                                                             <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{emp.Code}</span>
                                                         </div>
                                                         <div className="text-xs text-slate-500 line-clamp-1">{emp.PositionName || 'ไม่ระบุตำแหน่ง'} • {emp.DepartmentName || 'ไม่ระบุฝ่าย'}</div>
                                                     </button>
                                                 ))}
-                                                
-                                                {filteredEmployees.length > 100 && (
-                                                    <div className="text-center text-xs text-slate-500 pt-3 pb-6">
-                                                        แสดง 100 รายการแรก...<br/>กรุณาพิมพ์เพิ่มเพื่อค้นหาให้แคบลง
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     )}
@@ -438,36 +348,53 @@
                         </div>
                     </div>
 
-                    {/* Main Content Right */}
-                    <div className="flex-1 bg-slate-100 h-full p-4 lg:p-8 flex flex-col relative overflow-hidden">
-                        <div className="bg-white flex-1 rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative">
+                    {/* ---------------- Main Content Right (Viewer) ---------------- */}
+                    {/* บนมือถือ: ถ้ายังไม่เลือกพนักงาน ให้ซ่อน (hidden) ถ้าเลือกแล้วให้แสดง (flex) / บน PC แสดงเสมอ (lg:flex) */}
+                    <div className={`flex-1 flex-col relative overflow-hidden bg-slate-100 lg:p-6 ${!selectedEmployee ? 'hidden lg:flex' : 'flex'}`}>
+                        
+                        <div className="bg-white flex-1 lg:rounded-xl shadow-sm border-0 lg:border border-slate-200 overflow-hidden flex flex-col relative h-full">
                             
                             {/* Header Toolbar */}
-                            <div className="h-14 border-b border-slate-100 bg-white flex items-center justify-between px-6 shrink-0 z-10">
-                                <div className="flex items-center gap-3">
+                            <div className="h-14 border-b border-slate-100 bg-white flex items-center justify-between px-3 lg:px-6 shrink-0 z-10 shadow-sm">
+                                <div className="flex items-center gap-2 lg:gap-3 overflow-hidden">
+                                    
+                                    {/* ปุ่ม ย้อนกลับ (แสดงเฉพาะจอมือถือ และเมื่อมีการเลือกเอกสารแล้ว) */}
+                                    {selectedEmployee && (
+                                        <button 
+                                            onClick={() => setSelectedEmployee(null)}
+                                            className="lg:hidden p-2 -ml-1 text-slate-500 hover:bg-slate-100 rounded-md transition-colors shrink-0"
+                                            title="กลับไปหน้ารายชื่อ"
+                                        >
+                                            <IconArrowLeft className="w-5 h-5" />
+                                        </button>
+                                    )}
+
                                     {selectedEmployee ? (
-                                        <>
-                                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                            <h2 className="font-semibold text-slate-700">แสดงผล: {selectedEmployee.FullName}</h2>
-                                        </>
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            <div className="w-2 h-2 rounded-full bg-green-500 shrink-0 hidden sm:block"></div>
+                                            <h2 className="font-semibold text-slate-700 text-sm sm:text-base truncate">
+                                                {selectedEmployee.FullName}
+                                            </h2>
+                                        </div>
                                     ) : (
-                                        <h2 className="font-medium text-slate-400">ยังไม่ได้เลือกเอกสาร</h2>
+                                        <h2 className="font-medium text-slate-400 hidden lg:block">ยังไม่ได้เลือกเอกสาร</h2>
                                     )}
                                 </div>
+
                                 {selectedEmployee && (
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs bg-slate-100 text-slate-500 px-3 py-1 rounded-full font-mono hidden sm:inline-block">
+                                    <div className="flex items-center gap-2 lg:gap-3 shrink-0 ml-2">
+                                        <span className="text-[10px] lg:text-xs bg-slate-100 text-slate-500 px-2 lg:px-3 py-1 rounded-full font-mono hidden sm:inline-block">
                                             {calculatedDate}
                                         </span>
                                         <a 
                                             href={documentUrl} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-1.5 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-md transition-colors font-medium shadow-sm"
+                                            className="flex items-center gap-1.5 text-xs sm:text-sm bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-2.5 py-1.5 rounded-md transition-colors font-medium shadow-sm"
                                             title="เปิดเอกสารในแท็บใหม่"
                                         >
                                             <IconExternalLink className="w-4 h-4" />
-                                            <span>เปิดแท็บใหม่</span>
+                                            <span className="hidden sm:inline">เปิดแท็บใหม่</span>
                                         </a>
                                     </div>
                                 )}
@@ -478,17 +405,17 @@
                                 {selectedEmployee ? (
                                     <iframe 
                                         src={documentUrl}
-                                        className="w-full h-full border-0 absolute inset-0"
-                                        onError={() => alert("ไม่สามารถโหลดแสดงผลได้")}
+                                        className="w-full h-full border-0 absolute inset-0 bg-white"
+                                        onError={() => alert("ไม่สามารถโหลดแสดงผลได้ กรุณากดปุ่ม 'เปิดแท็บใหม่' ด้านบนขวา")}
                                         title="Document Viewer"
                                     />
                                 ) : (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 backdrop-blur-sm">
-                                        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-slate-100">
-                                            <IconFileText className="w-10 h-10 text-slate-300" />
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 backdrop-blur-sm px-4 text-center">
+                                        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-white rounded-full flex items-center justify-center mb-4 lg:mb-6 shadow-sm border border-slate-100">
+                                            <IconFileText className="w-8 h-8 lg:w-10 lg:h-10 text-slate-300" />
                                         </div>
-                                        <p className="text-xl font-medium text-slate-600">พร้อมแสดงผล</p>
-                                        <p className="text-sm mt-2 text-slate-400">กรุณาเลือกพนักงานและวันที่จากเมนูด้านซ้าย</p>
+                                        <p className="text-lg lg:text-xl font-medium text-slate-600">พร้อมแสดงผล</p>
+                                        <p className="text-xs lg:text-sm mt-2 text-slate-400">กรุณาเลือกพนักงานจากเมนูด้านซ้าย</p>
                                     </div>
                                 )}
                             </div>
