@@ -133,13 +133,6 @@
                 <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
         );
-        const IconUpload = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-        );
         const IconSearch = ({ className }) => (
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 <circle cx="11" cy="11" r="8"></circle>
@@ -163,6 +156,7 @@
         const App = () => {
             const [employees, setEmployees] = useState(DEFAULT_EMPLOYEES);
             const [selectedEmployee, setSelectedEmployee] = useState(null);
+            const [isLoading, setIsLoading] = useState(true);
             
             // Search Query State
             const [searchQuery, setSearchQuery] = useState("");
@@ -186,6 +180,7 @@
 
             // โหลดข้อมูลอัตโนมัติ (สำหรับรันผ่าน Server)
             useEffect(() => {
+                setIsLoading(true);
                 fetch('./data.json')
                     .then(res => {
                         if(!res.ok) throw new Error("ไม่พบไฟล์ data.json");
@@ -198,38 +193,16 @@
                         } else if (Array.isArray(data)) {
                             setEmployees(data);
                         }
-                    })
-                    .catch(err => console.log("ใช้งานโหมดออฟไลน์ ใช้ข้อมูลตั้งต้นแทน:", err));
-            }, []);
-
-            // อัปโหลดไฟล์ JSON เอง
-            const handleFileUpload = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const jsonData = JSON.parse(e.target.result);
-                        
-                        // ดึงข้อมูลจากฟิลด์ Items ถ้ามี
-                        if (jsonData && jsonData.Items && Array.isArray(jsonData.Items)) {
-                            setEmployees(jsonData.Items);
-                        } else if (Array.isArray(jsonData)) {
-                            setEmployees(jsonData);
-                        } else {
-                            throw new Error("รูปแบบไฟล์ JSON ไม่ถูกต้อง (ไม่พบข้อมูล Items)");
-                        }
-                        
                         setErrorMsg("");
-                        setSelectedEmployee(null);
-                        setSearchQuery(""); // รีเซ็ตการค้นหาเมื่ออัปโหลดใหม่
-                    } catch (error) {
-                        setErrorMsg("รูปแบบไฟล์ JSON ไม่ถูกต้อง");
-                    }
-                };
-                reader.readAsText(file);
-            };
+                    })
+                    .catch(err => {
+                        console.log("ใช้งานโหมดออฟไลน์ ใช้ข้อมูลตั้งต้นแทน:", err);
+                        setErrorMsg("ไม่สามารถโหลดข้อมูลจาก Server ได้ หรือไฟล์ data.json ไม่มีอยู่จริง");
+                    })
+                    .finally(() => {
+                        setIsLoading(false);
+                    });
+            }, []);
 
             // อัปเดตวันที่เมื่อเลือกเดือน/ปีเปลี่ยน (แต่ผู้ใช้แก้จากปฏิทินเองได้)
             useEffect(() => {
@@ -301,23 +274,13 @@
                         </div>
 
                         <div className="p-5 flex-1 overflow-y-auto">
-                            {/* ส่วนเลือกไฟล์ JSON */}
-                            <div className="mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">ฐานข้อมูลพนักงาน (JSON)</label>
-                                <div className="relative">
-                                    <input 
-                                        type="file" 
-                                        accept=".json"
-                                        onChange={handleFileUpload}
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    />
-                                    <button className="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 font-medium py-2 px-4 rounded-md flex items-center justify-center gap-2 transition-colors">
-                                        <IconUpload className="w-4 h-4" />
-                                        {employees.length > 0 ? `โหลดแล้ว (${employees.length} รายการ)` : "เลือกไฟล์ JSON"}
-                                    </button>
+                            
+                            {/* แสดงแจ้งเตือนกรณีดึงไฟล์ Error */}
+                            {errorMsg && (
+                                <div className="mb-6 bg-red-50 text-red-600 p-3 rounded-md border border-red-200 text-sm">
+                                    {errorMsg} <br/><span className="text-xs text-red-500">กำลังใช้ข้อมูลทดสอบแทน</span>
                                 </div>
-                                {errorMsg && <p className="text-red-500 text-xs mt-2">{errorMsg}</p>}
-                            </div>
+                            )}
 
                             {/* ส่วนเลือกเดือน/ปี และ ปฏิทิน */}
                             <div className="mb-6 space-y-3">
@@ -359,7 +322,7 @@
                                 <label className="block text-sm font-semibold text-slate-700 mb-3 flex justify-between items-center shrink-0">
                                     ค้นหาพนักงาน
                                     <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-xs font-mono">
-                                        Total: {employees.length}
+                                        Total: {isLoading ? '...' : employees.length}
                                     </span>
                                 </label>
 
@@ -370,10 +333,11 @@
                                     </div>
                                     <input 
                                         type="text" 
-                                        className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 outline-none transition-shadow" 
+                                        className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5 outline-none transition-shadow disabled:bg-slate-50 disabled:text-slate-400" 
                                         placeholder="พิมพ์ รหัส, ชื่อ, ตำแหน่ง, ฝ่าย..." 
                                         value={searchQuery}
                                         onChange={e => setSearchQuery(e.target.value)}
+                                        disabled={isLoading}
                                     />
                                     {searchQuery && (
                                         <button 
@@ -386,9 +350,17 @@
                                 </div>
                                 
                                 <div className="flex-1 overflow-y-auto pr-1">
-                                    {employees.length === 0 ? (
+                                    {isLoading ? (
                                         <div className="text-center py-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg">
-                                            <p className="text-sm">กรุณาอัปโหลดไฟล์ฐานข้อมูล<br/>หรือตรวจสอบไฟล์ data.json</p>
+                                            <svg className="animate-spin h-6 w-6 text-blue-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <p className="text-sm">กำลังโหลดข้อมูลพนักงาน...</p>
+                                        </div>
+                                    ) : employees.length === 0 ? (
+                                        <div className="text-center py-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-lg">
+                                            <p className="text-sm">ไม่พบข้อมูลพนักงาน<br/>กรุณาตรวจสอบไฟล์ data.json</p>
                                         </div>
                                     ) : !searchQuery.trim() ? (
                                         /* แสดงประวัติดูล่าสุดเมื่อยังไม่ได้ค้นหา */
